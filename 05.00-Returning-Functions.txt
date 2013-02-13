@@ -1,0 +1,14 @@
+The previous chapter showed how the ability to pass functions as arguments leads
+to greater possibilities for abstraction. The more we can do to functions, the more
+we can take advantage of these possibilities. By defining functions to build and
+return new functions, we can magnify the effect of utilities which take functions
+as arguments.
+
+
+
+The utilities in this chapter operate on functions. It would be more natural, at
+least in Common Lisp, to write many of them to operate on expressions—that is,
+as macros. A layer of macros will be superimposed on some of these operators
+in Chapter 15. However, it is important to know what part of the task can be
+done with functions, even if we will eventually call these functions only through
+macros.

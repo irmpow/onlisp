@@ -1,0 +1,64 @@
+Common Lisp originally provided several pairs of complementary functions. The
+functions remove-if and remove-if-not make one such pair. If pred is a
+predicate of one argument, then
+(remove-if-not #’pred lst)
+is equivalent to
+(remove-if #’(lambda (x) (not (pred x))) lst)
+
+
+By varying the function given as an argument to one, we can duplicate the
+effect of the other. In that case, why have both? CLTL2 includes a new function
+intended for cases like this: complement takes a predicate p and returns a function
+which always returns the opposite value. When p returns true, the complement
+returns false, and vice versa. Now we can replace
+(remove-if-not #’pred lst)
+with the equivalent
+(remove-if (complement #’pred) lst)
+With complement, there is little justification for continuing to use the -if-not
+functions.1 Indeed, CLTL2 (p. 391) says that their use is now deprecated. If they
+remain in Common Lisp, it will only be for the sake of compatibility.
+The new complement operator is the tip of an important iceberg: functions
+which return functions. This has long been an important part of the idiom of
+Scheme. Scheme was the first Lisp to make functions lexical closures, and it is
+this which makes it interesting to have functions as return values.
+It’s not that we couldn’t return functions in a dynamically scoped Lisp. The
+following function would work the same under dynamic or lexical scope:
+(defun joiner (obj)
+(typecase obj
+(cons
+#’append)
+(number #’+)))
+It takes an object and, depending on its type, returns a function to add such objects
+together. We could use it to define a polymorphic join function that worked for
+numbers or lists:
+(defun join (&rest args)
+(apply (joiner (car args)) args))
+However, returning constant functions is the limit of what we can do with dynamic
+scope. What we can’t do (well) is build functions at runtime; joiner can return
+one of two functions, but the two choices are fixed.
+On page 18 we saw another function for returning functions, which relied on
+lexical scope:
+(defun make-adder (n)
+#’(lambda (x) (+ x n)))
+
+Calling make-adder will yield a closure whose behavior depends on the value
+originally given as an argument:
+> (setq add3 (make-adder 3))
+#<Interpreted-Function BF1356>
+> (funcall add3 2)
+5
+Under lexical scope, instead of merely choosing among a group of constant func-
+tions, we can build new closures at runtime. With dynamic scope this technique
+is impossible.2 If we consider how complement would be written, we see that it
+too must return a closure:
+(defun complement (fn)
+#’(lambda (&rest args) (not (apply fn args))))
+The function returned by complement uses the value of the parameter fn when
+complement was called. So instead of just choosing from a group of constant
+functions, complement can custom-build the inverse of any function:
+> (remove-if (complement #’oddp) ’(1 2 3 4 5 6))
+(1 3 5)
+Being able to pass functions as arguments is a powerful tool for abstraction.
+The ability to write functions which return functions allows us to make the most
+of it. The remaining sections present several examples of utilities which return
+functions.
